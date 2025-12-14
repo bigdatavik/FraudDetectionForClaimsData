@@ -18,7 +18,7 @@ from shared.config import get_config
 
 cfg = get_config()
 
-VOLUME_PATH = f"/Volumes/{cfg.catalog}/{cfg.schema}/fraud_knowledge_docs"
+VOLUME_PATH = cfg.volume_path
 FULL_TABLE_NAME = cfg.knowledge_base_table
 
 print(f"Table: {FULL_TABLE_NAME}")

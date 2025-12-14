@@ -290,14 +290,15 @@ These are computed by `shared/config.py`:
 
 Derived from catalog and schema:
 ```python
-cfg.volume = "fraud_docs"  # Fixed name
+cfg.volume = "fraud_knowledge_docs"  # Fixed name for knowledge base documents
 ```
 
 ### volume_path
 
 Full path to volume:
 ```python
-cfg.volume_path = f"/Volumes/{catalog}/{schema}/{volume}"
+cfg.volume_path = f"/Volumes/{catalog}/{schema}/fraud_knowledge_docs"
+# Example: /Volumes/fraud_detection_dev/claims_analysis/fraud_knowledge_docs
 ```
 
 ### claims_table

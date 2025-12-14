@@ -88,6 +88,23 @@ fi
 # Step 7: Deploy app source code
 echo "🚀 Step 5: Deploying app source code..."
 echo ""
+echo "⏳ Waiting for app to be ready for deployment (checking status)..."
+
+# Wait a moment for the app to be fully initialized
+sleep 5
+
+# Check if there's an active deployment and wait for it
+for i in {1..12}; do
+    APP_STATUS=$(databricks apps get frauddetection-${ENVIRONMENT} --profile DEFAULT_azure --output json 2>/dev/null | python3 -c "import sys, json; data=json.load(sys.stdin); print(data.get('compute_status', {}).get('state', 'UNKNOWN'))" 2>/dev/null || echo "UNKNOWN")
+    
+    if [ "$APP_STATUS" != "DEPLOYING" ]; then
+        echo "✅ App ready for deployment (status: $APP_STATUS)"
+        break
+    fi
+    
+    echo "  App is still deploying, waiting... ($i/12)"
+    sleep 10
+done
 
 ./deploy_app_source.sh ${ENVIRONMENT}
 

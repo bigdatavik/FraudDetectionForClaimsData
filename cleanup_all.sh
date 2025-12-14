@@ -22,29 +22,69 @@ fi
 
 ENVIRONMENT=$1
 SKIP_CONFIRM=$2
-PROFILE="DEFAULT_azure"
 
-# Load config
+# Check if config.yaml exists
 if [ ! -f "config.yaml" ]; then
     echo -e "${RED}Error: config.yaml not found${NC}"
     exit 1
 fi
 
-# Parse config values
-CATALOG=$(grep "catalog_name:" config.yaml | awk '{print $2}' | tr -d '"')
-USER_EMAIL=$(grep "user_email:" config.yaml | awk '{print $2}' | tr -d '"')
-APP_NAME=$(grep "app_name:" config.yaml | awk '{print $2}' | tr -d '"')
+# Load config from config.yaml using Python
+echo "📝 Loading configuration from config.yaml..."
+CONFIG_OUTPUT=$(python3 -c "
+import yaml
+import sys
+try:
+    with open('config.yaml', 'r') as f:
+        config = yaml.safe_load(f)
+    env = config['environments']['$ENVIRONMENT']
+    print(f\"PROFILE='{env['profile']}'\")
+    print(f\"CATALOG='{env['catalog']}'\")
+    print(f\"APP_NAME='{env['app_name']}'\")
+except Exception as e:
+    print(f'ERROR: {e}', file=sys.stderr)
+    sys.exit(1)
+" 2>&1)
+
+if [ $? -ne 0 ]; then
+    echo -e "${RED}${CONFIG_OUTPUT}${NC}"
+    exit 1
+fi
+
+eval "$CONFIG_OUTPUT"
+
+if [ -z "$APP_NAME" ]; then
+    echo -e "${RED}Error: Failed to load configuration from config.yaml${NC}"
+    exit 1
+fi
+
+# Get current user email from Databricks CLI
+USER_EMAIL=$(databricks current-user me --profile ${PROFILE} --output json 2>/dev/null | python3 -c "import sys, json; print(json.load(sys.stdin)['userName'])" 2>&1)
+
+if [ $? -ne 0 ] || [ -z "$USER_EMAIL" ]; then
+    echo -e "${RED}Error: Could not determine current Databricks user${NC}"
+    echo "Please ensure Databricks CLI is configured properly"
+    exit 1
+fi
+
+echo ""
+echo -e "${GREEN}✅ Configuration loaded${NC}"
+echo "   Profile: $PROFILE"
+echo "   Catalog: $CATALOG"
+echo "   App Name: $APP_NAME"
+echo "   User: $USER_EMAIL"
+echo ""
 
 echo -e "${YELLOW}============================================${NC}"
 echo -e "${YELLOW}   CLEANUP ALL RESOURCES - ${ENVIRONMENT}${NC}"
 echo -e "${YELLOW}============================================${NC}"
 echo ""
 echo "This will DELETE:"
-echo "  • App: ${APP_NAME}-${ENVIRONMENT}"
+echo "  • App: ${APP_NAME}"
 echo "  • Catalog: ${CATALOG}"
 echo "  • All tables, vector indexes, Genie Space"
 echo "  • Local bundle state (.databricks/)"
-echo "  • Remote workspace files"
+echo "  • Remote workspace files: /Workspace/Users/${USER_EMAIL}/.bundle/fraud_detection_claims"
 echo ""
 
 # Confirmation prompt
@@ -62,42 +102,85 @@ echo ""
 
 # Step 1: Delete the app
 echo -e "${YELLOW}[1/5] Deleting Databricks app...${NC}"
-if databricks apps delete ${APP_NAME}-${ENVIRONMENT} --profile ${PROFILE} 2>/dev/null; then
-    echo -e "${GREEN}✓ App deleted${NC}"
+if databricks apps delete ${APP_NAME} --profile ${PROFILE} 2>/dev/null; then
+    echo -e "${GREEN}✓ App deleted: ${APP_NAME}${NC}"
 else
-    echo -e "${YELLOW}⚠ App not found or already deleted${NC}"
+    echo -e "${YELLOW}⚠ App not found or already deleted: ${APP_NAME}${NC}"
 fi
 echo ""
 
-# Step 2: Run cleanup notebook
-echo -e "${YELLOW}[2/5] Running cleanup notebook to delete catalog and resources...${NC}"
+# Step 2: Delete Genie Space (must be done before catalog deletion)
+echo -e "${YELLOW}[2/6] Deleting Genie Space...${NC}"
 
-# Import cleanup notebook
-TEMP_CLEANUP_PATH="/Workspace/Users/${USER_EMAIL}/.temp_cleanup_$(date +%s)"
-if databricks workspace import ./setup/00_CLEANUP.py "${TEMP_CLEANUP_PATH}" \
-    --language PYTHON \
-    --overwrite \
-    --profile ${PROFILE} 2>&1; then
+# Get Genie Space display name from config
+GENIE_DISPLAY_NAME=$(python3 -c "
+import yaml
+with open('config.yaml', 'r') as f:
+    config = yaml.safe_load(f)
+print(config['common']['genie_space_display_name'])
+" 2>&1)
+
+echo "  Looking for Genie Space: ${GENIE_DISPLAY_NAME}"
+
+# Find and delete Genie Space using Databricks API
+GENIE_SPACE_ID=$(databricks api get /api/2.0/genie/spaces --profile ${PROFILE} --output json 2>/dev/null | python3 -c "
+import sys, json
+try:
+    data = json.load(sys.stdin)
+    spaces = data.get('spaces', [])
+    for space in spaces:
+        if space.get('title') == '${GENIE_DISPLAY_NAME}' or space.get('name') == '${GENIE_DISPLAY_NAME}':
+            print(space.get('space_id', ''))
+            break
+except:
+    pass
+" 2>&1)
+
+if [ -n "$GENIE_SPACE_ID" ]; then
+    echo "  Found Genie Space ID: ${GENIE_SPACE_ID}"
+    echo "  Deleting Genie Space..."
     
-    echo -e "${GREEN}✓ Cleanup notebook imported${NC}"
+    DELETE_GENIE=$(databricks api delete "/api/2.0/genie/spaces/${GENIE_SPACE_ID}" --profile ${PROFILE} 2>&1)
     
-    # Run cleanup notebook
-    echo "  Running cleanup (this may take a minute)..."
-    if databricks workspace run "${TEMP_CLEANUP_PATH}" --profile ${PROFILE} 2>&1; then
-        echo -e "${GREEN}✓ Cleanup notebook completed${NC}"
+    if [ $? -eq 0 ]; then
+        echo -e "${GREEN}✓ Genie Space deleted: ${GENIE_DISPLAY_NAME}${NC}"
     else
-        echo -e "${YELLOW}⚠ Cleanup notebook failed or resources already deleted${NC}"
+        echo -e "${YELLOW}⚠ Error deleting Genie Space: ${DELETE_GENIE}${NC}"
     fi
-    
-    # Delete temp cleanup notebook
-    databricks workspace delete "${TEMP_CLEANUP_PATH}" --profile ${PROFILE} 2>/dev/null || true
 else
-    echo -e "${YELLOW}⚠ Could not import cleanup notebook${NC}"
+    echo -e "${YELLOW}⚠ Genie Space not found (may already be deleted)${NC}"
+fi
+echo ""
+
+# Step 3: Delete catalog and all resources
+echo -e "${YELLOW}[3/6] Deleting catalog and all resources...${NC}"
+echo "  This will delete:"
+echo "    - Catalog: ${CATALOG}"
+echo "    - All schemas, tables, functions, volumes"
+echo "    - Vector Search index (if exists)"
+echo "    - Genie Space (will be deleted separately)"
+echo ""
+
+echo "  Deleting catalog (this may take 1-2 minutes)..."
+
+# Delete catalog using Databricks CLI - CASCADE will delete everything inside
+DELETE_OUTPUT=$(databricks catalogs delete "${CATALOG}" --force --profile ${PROFILE} 2>&1)
+
+if [ $? -eq 0 ]; then
+    echo -e "${GREEN}✓ Catalog deleted: ${CATALOG}${NC}"
+    echo "  All tables, schemas, functions, and volumes were deleted"
+else
+    if echo "$DELETE_OUTPUT" | grep -q "not found\|does not exist"; then
+        echo -e "${YELLOW}⚠ Catalog not found (already deleted): ${CATALOG}${NC}"
+    else
+        echo -e "${YELLOW}⚠ Catalog deletion had errors${NC}"
+        echo "  ${DELETE_OUTPUT}"
+    fi
 fi
 echo ""
 
 # Step 3: Clean local bundle state
-echo -e "${YELLOW}[3/5] Cleaning local bundle state...${NC}"
+echo -e "${YELLOW}[4/6] Cleaning local bundle state...${NC}"
 if [ -d ".databricks" ]; then
     rm -rf .databricks
     echo -e "${GREEN}✓ Local .databricks/ deleted${NC}"
@@ -107,33 +190,57 @@ fi
 echo ""
 
 # Step 4: Clean remote bundle state
-echo -e "${YELLOW}[4/5] Cleaning remote workspace files...${NC}"
-BUNDLE_PATH="/Users/${USER_EMAIL}/.bundle/fraud_detection_claims"
-if databricks workspace delete "${BUNDLE_PATH}" --recursive --profile ${PROFILE} 2>/dev/null; then
-    echo -e "${GREEN}✓ Remote bundle files deleted${NC}"
+echo -e "${YELLOW}[5/6] Cleaning remote workspace files...${NC}"
+BUNDLE_PATH="/Workspace/Users/${USER_EMAIL}/.bundle/fraud_detection_claims"
+echo "  Deleting: ${BUNDLE_PATH}"
+if databricks workspace delete "${BUNDLE_PATH}" --recursive --profile ${PROFILE} 2>&1; then
+    echo -e "${GREEN}✓ Remote bundle files deleted: ${BUNDLE_PATH}${NC}"
 else
     echo -e "${YELLOW}⚠ Remote bundle files not found or already deleted${NC}"
 fi
 echo ""
 
 # Step 5: List and optionally delete setup job
-echo -e "${YELLOW}[5/5] Checking for setup job...${NC}"
-JOB_LIST=$(databricks jobs list --profile ${PROFILE} --output json 2>/dev/null | jq -r '.jobs[] | select(.settings.name == "fraud_detection_claims_setup_fraud_detection") | .job_id' || echo "")
+echo -e "${YELLOW}[6/6] Checking for setup job...${NC}"
 
-if [ -n "$JOB_LIST" ]; then
-    echo "  Found setup job(s): $JOB_LIST"
-    read -p "  Delete setup job? (yes/no): " delete_job
+# Use Databricks CLI to list and find jobs
+JOB_IDS=$(databricks jobs list --profile ${PROFILE} --output json 2>/dev/null | python3 -c "
+import sys, json
+try:
+    data = json.load(sys.stdin)
+    jobs = data.get('jobs', [])
+    for job in jobs:
+        settings = job.get('settings', {})
+        job_name = settings.get('name', '')
+        if job_name == 'fraud_detection_setup_${ENVIRONMENT}':
+            print(job.get('job_id', ''))
+except:
+    pass
+" 2>&1)
+
+if [ -n "$JOB_IDS" ]; then
+    echo "  Found setup job(s): $JOB_IDS"
+    
+    if [ "$SKIP_CONFIRM" != "--skip-confirmation" ]; then
+        read -p "  Delete setup job? (yes/no): " delete_job
+    else
+        delete_job="yes"
+    fi
+    
     if [ "$delete_job" == "yes" ]; then
-        for job_id in $JOB_LIST; do
-            if databricks jobs delete --job-id "$job_id" --profile ${PROFILE} 2>/dev/null; then
+        for job_id in $JOB_IDS; do
+            echo "  Deleting job: $job_id"
+            if databricks jobs delete --job-id "$job_id" --profile ${PROFILE} 2>&1; then
                 echo -e "${GREEN}✓ Job $job_id deleted${NC}"
+            else
+                echo -e "${YELLOW}⚠ Could not delete job $job_id${NC}"
             fi
         done
     else
         echo -e "${YELLOW}⚠ Setup job not deleted (you can delete it manually later)${NC}"
     fi
 else
-    echo -e "${YELLOW}⚠ No setup job found${NC}"
+    echo -e "${YELLOW}⚠ No setup job found for environment: ${ENVIRONMENT}${NC}"
 fi
 echo ""
 

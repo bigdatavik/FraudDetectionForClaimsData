@@ -56,7 +56,7 @@ class FraudDetectionConfig:
         self.sync_type = common_config['sync_type']
         
         # Computed values (automatically derived)
-        self.volume = "fraud_docs"
+        self.volume = "fraud_knowledge_docs"
         self.volume_path = f"/Volumes/{self.catalog}/{self.schema}/{self.volume}"
         self.claims_table = f"{self.catalog}.{self.schema}.claims_data"
         self.knowledge_base_table = f"{self.catalog}.{self.schema}.fraud_cases_kb"

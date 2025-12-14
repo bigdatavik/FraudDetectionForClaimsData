@@ -452,52 +452,192 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for contribution guidelines.
 
 ### **Complete Cleanup** (Start Fresh)
 
-If you want to destroy everything and test end-to-end deployment:
+The `cleanup_all.sh` script provides a complete teardown of all Databricks resources, perfect for testing end-to-end deployment or resetting your environment.
+
+#### **Usage**
 
 ```bash
-# Cleanup everything
-./cleanup_all.sh dev
+# Interactive mode (asks for confirmation)
+./cleanup_all.sh <environment>
+
+# Skip confirmation (for automation)
+./cleanup_all.sh <environment> --skip-confirmation
 ```
 
-**This script will:**
-1. 🗑️ Delete the Databricks app
-2. 🗑️ Run cleanup notebook (deletes catalog, schema, tables, vector index, Genie Space)
-3. 🗑️ Remove local `.databricks/` folder
-4. 🗑️ Remove remote workspace bundle files
-5. 🗑️ Optionally delete the setup job
-
-**Interactive mode** (asks for confirmation):
+**Examples:**
 ```bash
+# Cleanup dev environment (with confirmation prompt)
 ./cleanup_all.sh dev
+
+# Cleanup staging environment (no prompts)
+./cleanup_all.sh staging --skip-confirmation
+
+# Cleanup prod environment (with confirmation)
+./cleanup_all.sh prod
 ```
 
-**Skip confirmation** (for automation):
-```bash
-./cleanup_all.sh dev --skip-confirmation
+---
+
+#### **What Gets Deleted**
+
+The script performs 6 cleanup steps:
+
+**[1/6] Delete Databricks App**
+- Removes the deployed Streamlit app
+- App name from config: `{app_name}`
+
+**[2/6] Delete Genie Space**
+- Removes the Genie Space using Databricks API
+- Searches for space by display name: `Fraud Detection Analytics`
+- Must be deleted before catalog (not part of Unity Catalog)
+
+**[3/6] Run Catalog Cleanup**
+- Deletes Unity Catalog and all resources using `databricks catalogs delete --force`:
+  - Catalog (e.g., `fraud_detection_dev`)
+  - Schema (`claims_analysis`)
+  - Tables (claims data, knowledge base, config tables)
+  - Vector Search index (CASCADE deletion)
+  - All UC functions (fraud_classify, fraud_extract_indicators, fraud_generate_explanation)
+  - All volumes
+- **Fast**: No cluster spinup required (~30 seconds)
+
+**[4/6] Clean Local Bundle State**
+- Removes `.databricks/` folder
+- Clears local deployment cache
+
+**[5/6] Clean Remote Workspace Files**
+- Deletes bundle files from workspace
+- Path: `/Workspace/Users/{user_email}/.bundle/fraud_detection_claims`
+
+**[6/6] Setup Job (Optional)**
+- Lists setup job(s)
+- Asks if you want to delete them
+- Jobs named: `fraud_detection_setup_{environment}`
+
+---
+
+#### **Safety Features**
+
+✅ **Confirmation Prompt**: Asks "Are you sure?" before destroying resources  
+✅ **Error Handling**: Continues even if resources don't exist  
+✅ **Clear Output**: Color-coded messages show progress  
+✅ **Resource List**: Shows exactly what will be deleted  
+✅ **Optional Job Deletion**: Asks separately about setup job  
+
+---
+
+#### **Prerequisites**
+
+Before running cleanup:
+- ✅ `config.yaml` must exist in the project root
+- ✅ Databricks CLI configured with profile `DEFAULT_azure`
+- ✅ Proper permissions to delete resources
+
+---
+
+#### **Configuration Required**
+
+The script reads these values from `config.yaml`:
+```yaml
+environments:
+  dev:
+    catalog: "fraud_detection_dev"      # Catalog to delete
+    app_name: "frauddetection-dev"      # App to delete
+    profile: "DEFAULT_azure"            # Databricks profile to use
+
+common:
+  genie_space_display_name: "Fraud Detection Analytics"  # Genie Space to delete
 ```
 
 ---
 
 ### **Full End-to-End Test**
 
-Perfect for testing before demos or production:
+Perfect for testing before demos, validating changes, or preparing for production:
 
 ```bash
-# Step 1: Clean everything
+# Step 1: Complete cleanup (removes everything)
 ./cleanup_all.sh dev
 
-# Step 2: Deploy fresh
+# Step 2: Fresh deployment (creates everything from scratch)
 ./deploy_with_config.sh dev
 
 # Step 3: Test the app
 # Open: https://your-workspace.azuredatabricks.net/apps/frauddetection-dev
-# Try analyzing sample claims
+# Try analyzing sample claims with the agent
 ```
 
-**Expected Timeline:**
-- Cleanup: ~2-3 minutes
-- Fresh deployment: ~10-15 minutes
-- Total: ~15-20 minutes
+---
+
+### **Expected Timeline**
+
+| Phase | Time | Details |
+|-------|------|---------|
+| **Cleanup** | ~1-2 minutes | Delete app, Genie, catalog, files |
+| **Fresh Deployment** | ~10-15 minutes | Setup job takes longest |
+| **Total** | **~12-17 minutes** | Full end-to-end cycle |
+
+**Breakdown:**
+- Delete app: ~10 seconds
+- Delete Genie Space: ~5 seconds
+- Delete catalog (CASCADE): ~30-60 seconds
+- Local cleanup: ~5 seconds
+- Remote cleanup: ~10 seconds
+- Setup job prompt: ~5 seconds
+
+---
+
+### **Troubleshooting Cleanup**
+
+#### **Problem: "config.yaml not found"**
+```bash
+# Solution: Run from project root
+cd /path/to/FraudDetectionForClaimsData
+./cleanup_all.sh dev
+```
+
+#### **Problem: "App not found"**
+**Cause**: App already deleted or never deployed  
+**Solution**: Script continues automatically (warning shown)
+
+#### **Problem: "Genie Space not found"**
+**Cause**: Genie Space already deleted or name mismatch  
+**Solution**: Check `config.yaml` for correct `genie_space_display_name`
+
+#### **Problem: "Catalog not found"**
+**Cause**: Catalog already deleted or insufficient permissions  
+**Solution**: Script continues automatically (warning shown)
+
+#### **Problem: "Cleanup notebook failed"**
+**Cause**: Catalog already deleted or insufficient permissions  
+**Solution**: Check Databricks workspace permissions
+
+#### **Problem: Can't delete setup job**
+**Cause**: Job is running or you lack permissions  
+**Solution**: 
+1. Cancel running job in Databricks UI
+2. Or delete manually later: `databricks jobs delete --job-id <id>`
+
+---
+
+### **When to Use Cleanup**
+
+| Scenario | Command | Why |
+|----------|---------|-----|
+| **Testing deployment** | `./cleanup_all.sh dev` | Ensure clean slate |
+| **Before demo** | `./cleanup_all.sh dev` + `./deploy_with_config.sh dev` | Fresh, predictable state |
+| **Cost savings** | `./cleanup_all.sh dev --skip-confirmation` | Remove unused resources |
+| **Environment reset** | `./cleanup_all.sh staging` | Fix broken state |
+| **Switching configs** | Clean + deploy | Apply major config changes |
+
+---
+
+### **What NOT to Do**
+
+❌ **Don't cleanup production without backup**  
+❌ **Don't skip confirmation in production** (always use interactive mode)  
+❌ **Don't cleanup while jobs are running** (cancel them first)  
+❌ **Don't delete `config.yaml`** (script needs it)
 
 ---
 

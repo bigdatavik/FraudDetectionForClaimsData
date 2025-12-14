@@ -277,10 +277,10 @@ print(f"✅ Created {len(fraud_knowledge)} knowledge base documents")
 # Create volume for knowledge base documents
 try:
     spark.sql(f"""
-    CREATE VOLUME IF NOT EXISTS {cfg.catalog}.{cfg.schema}.fraud_knowledge_docs
+    CREATE VOLUME IF NOT EXISTS {cfg.catalog}.{cfg.schema}.{cfg.volume}
     COMMENT 'Knowledge base documents for fraud detection vector search'
     """)
-    print(f"✅ Volume created: {cfg.catalog}.{cfg.schema}.fraud_knowledge_docs")
+    print(f"✅ Volume created: {cfg.catalog}.{cfg.schema}.{cfg.volume}")
 except Exception as e:
     print(f"Volume creation: {e}")
 
@@ -291,7 +291,7 @@ except Exception as e:
 
 # COMMAND ----------
 
-volume_path = f"/Volumes/{cfg.catalog}/{cfg.schema}/fraud_knowledge_docs"
+volume_path = cfg.volume_path
 
 # Write each document as a text file
 for doc in fraud_knowledge:

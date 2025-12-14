@@ -82,19 +82,11 @@ echo "   App: $APP_NAME"
 echo ""
 
 # Get current Databricks username for constructing bundle path
-CURRENT_USER=$(python3 -c "
-from databricks.sdk import WorkspaceClient
-try:
-    w = WorkspaceClient(profile='$PROFILE')
-    print(w.current_user.me().user_name)
-except Exception as e:
-    import sys
-    sys.exit(1)
-" 2>/dev/null)
+CURRENT_USER=$(databricks current-user me --profile "$PROFILE" --output json 2>/dev/null | python3 -c "import sys, json; print(json.load(sys.stdin)['userName'])" 2>&1)
 
 if [ $? -ne 0 ] || [ -z "$CURRENT_USER" ]; then
     echo -e "${RED}❌ ERROR: Could not determine current Databricks user${NC}"
-    echo "Please ensure databricks-sdk is installed: pip install databricks-sdk"
+    echo "Please ensure Databricks CLI is configured properly"
     exit 1
 fi
 
@@ -133,7 +125,8 @@ echo "🔍 Checking app status..."
 databricks apps get "$APP_NAME" --profile "$PROFILE" | grep -E "(state|url)" || true
 
 echo ""
-echo "🌐 App URL: https://$(databricks workspace get-status --profile "$PROFILE" | grep 'Host:' | awk '{print $2}')/apps/$APP_NAME"
+echo "🌐 App URL: https://frauddetection-dev-984752964297111.11.azure.databricksapps.com"
+echo "   (or check: databricks apps get $APP_NAME --profile $PROFILE | grep url)"
 echo ""
 echo -e "${BLUE}💡 Next steps:${NC}"
 echo "   1. Wait 30-60 seconds for app to start"

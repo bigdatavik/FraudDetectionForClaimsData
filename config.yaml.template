@@ -33,6 +33,10 @@ environments:
     # Streamlit app name (will appear in URL)
     app_name: "fraud-detection-dev"
     
+    # Genie Space ID (OPTIONAL - auto-discovered from config_genie table)
+    # Leave empty for automatic lookup, or set manually if needed
+    genie_space_id: ""
+    
   staging:
     workspace_host: "https://your-workspace.azuredatabricks.net"
     profile: "STAGING"
@@ -42,6 +46,7 @@ environments:
     vector_endpoint: "your-staging-vector-endpoint"
     llm_endpoint: "databricks-claude-sonnet-4-5"
     app_name: "fraud-detection-staging"
+    genie_space_id: ""  # OPTIONAL - auto-discovered
     
   prod:
     workspace_host: "https://your-workspace.azuredatabricks.net"
@@ -52,6 +57,7 @@ environments:
     vector_endpoint: "your-prod-vector-endpoint"
     llm_endpoint: "databricks-claude-sonnet-4-5"
     app_name: "fraud-detection-prod"
+    genie_space_id: ""  # OPTIONAL - auto-discovered
 
 # Common configuration shared across all environments
 common:
@@ -99,6 +105,10 @@ common:
 #    - Must be unique in your workspace
 #    - Use lowercase with hyphens only
 #
+# 6. genie_space_id: (OPTIONAL)
+#    - Leave empty - the app automatically discovers it from the config_genie table
+#    - Only set manually if automatic lookup fails
+#
 # EXAMPLE FILLED CONFIG:
 # 
 # dev:
@@ -110,5 +120,6 @@ common:
 #   vector_endpoint: "one-env-shared-endpoint-2"
 #   llm_endpoint: "databricks-claude-sonnet-4-5"
 #   app_name: "fraud-detection-dev"
+#   genie_space_id: ""  # Auto-discovered, leave empty
 
 

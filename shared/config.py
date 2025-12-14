@@ -43,6 +43,7 @@ class FraudDetectionConfig:
         self.vector_endpoint = env_config['vector_endpoint']
         self.llm_endpoint = env_config['llm_endpoint']
         self.app_name = env_config['app_name']
+        self.genie_space_id = env_config.get('genie_space_id', '')  # Optional, empty string if not set
         
         # Common settings
         self.spark_version = common_config['spark_version']

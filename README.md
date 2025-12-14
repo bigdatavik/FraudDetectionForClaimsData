@@ -52,27 +52,81 @@ This automatically does **everything**:
 4. ✅ Grants service principal permissions
 5. ✅ Deploys app source code
 
-**That's it!** The entire deployment is complete. Just wait for the script to finish.
+**After deployment completes, one additional step:**
+
+**🔑 Grant Genie Space Permissions (ONE-TIME, 30 seconds)**
+
+**What you're doing:** Giving your Databricks APP permission to query the Genie Space. The app runs as a "service principal" (like a robot user account).
+
+The setup notebook will output instructions like this:
+```
+📋 STEP-BY-STEP INSTRUCTIONS:
+
+1. Open Genie Space: https://your-workspace.azuredatabricks.net/#genie/abc123...
+
+2. Click 'Share' button (top-right corner)
+
+3. In the search box, type: frauddetection-dev
+   ☝️  This is your APP'S SERVICE PRINCIPAL name
+
+4. Select 'frauddetection-dev' from dropdown
+   (It will show as a service principal, not a user)
+
+5. Set permission level to: 'Can Run'
+   (NOT 'Can Use' - select 'Can Run' from the dropdown)
+
+6. Click 'Add' or 'Save'
+```
+
+**Why?** Databricks doesn't provide an API to grant Genie Space permissions programmatically. This is a one-time step per environment.
 
 ---
 
 **Option B: Manual Steps** (if you prefer step-by-step)
 ```bash
-# Generate app config
+# 1. Generate app config
 python generate_app_yaml.py dev
 
-# Deploy infrastructure
+# 2. Deploy infrastructure
 databricks bundle deploy --target dev
 
-# Create data and resources
+# 3. Create data and resources
 databricks bundle run setup_fraud_detection --target dev
 
-# Grant permissions
+# 4. Grant permissions
 ./grant_permissions.sh dev
 
-# Deploy app source code
+# 5. Deploy app source code
 ./deploy_app_source.sh dev
 ```
+
+**After step 3, grant Genie Space permissions:**
+
+**What you're doing:** Giving your Databricks APP permission to query the Genie Space. The app runs as a "service principal" (a robot user account).
+
+The notebook `setup/10_create_genie_space.py` will print instructions:
+```
+📋 STEP-BY-STEP INSTRUCTIONS:
+
+1. Open Genie Space in browser (URL provided in notebook output)
+
+2. Click 'Share' button (top-right corner)
+
+3. In the search box, type: frauddetection-dev
+   ☝️  This is your APP'S SERVICE PRINCIPAL name
+
+4. Select 'frauddetection-dev' from the dropdown
+   (It will show as a service principal, not a user)
+
+5. Set permission level to: 'Can Run'
+   (NOT 'Can Use' - select 'Can Run' from the dropdown)
+
+6. Click 'Add' or 'Save'
+```
+
+**Why?** This is a one-time manual step because Databricks doesn't support programmatic Genie Space permissions. Takes 30 seconds per environment.
+
+**What's a service principal?** It's the identity your app uses (like a robot account). When you deployed the app, Databricks created `frauddetection-dev` as its service principal automatically.
 
 ---
 
@@ -97,6 +151,7 @@ When you run the commands above, the system automatically:
 7. ✅ Creates Genie Space for natural language queries
 8. ✅ Deploys Streamlit app with 5 pages
 9. ✅ Grants all necessary permissions
+10. ⚠️ **Requires one manual step:** Grant Genie Space permissions (30 sec - see instructions above)
 
 **Total time**: ~5-7 minutes
 

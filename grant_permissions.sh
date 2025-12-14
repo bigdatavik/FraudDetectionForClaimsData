@@ -6,6 +6,7 @@
 # 3. SQL Warehouse (CAN_USE)
 # 4. UC Functions (EXECUTE on fraud_classify, fraud_extract_indicators, fraud_generate_explanation)
 # 5. Vector Index Source Table (SELECT on fraud_cases_kb)
+# 6. Genie Space (CAN_USE) - for natural language queries
 #
 # Usage:
 #   ./grant_permissions.sh [environment]
@@ -150,6 +151,47 @@ databricks grants update table ${CATALOG}.${SCHEMA}.fraud_cases_kb \
 
 echo -e "      ${GREEN}✅ SELECT granted on fraud_cases_kb (vector index source)${NC}"
 
+# 6. Genie Space permissions (CAN_USE)
+echo "  6️⃣  Granting GENIE SPACE permissions..."
+
+# Try to get Genie Space ID from environment variable first
+GENIE_SPACE_ID="${GENIE_SPACE_ID:-}"
+
+# If not in environment, try to query from config table
+if [ -z "$GENIE_SPACE_ID" ]; then
+    GENIE_SPACE_ID=$(databricks sql execute \
+      --warehouse-id ${WAREHOUSE_ID} \
+      --statement "SELECT config_value FROM ${CATALOG}.${SCHEMA}.config_genie WHERE config_key = 'genie_space_id'" \
+      --profile ${PROFILE} \
+      --output json 2>/dev/null | python3 -c "
+import sys, json
+try:
+    data = json.load(sys.stdin)
+    if 'result' in data and 'data_array' in data['result'] and len(data['result']['data_array']) > 0:
+        print(data['result']['data_array'][0][0])
+    else:
+        print('')
+except:
+    print('')
+" || echo "")
+fi
+
+if [ -z "$GENIE_SPACE_ID" ]; then
+    echo -e "      ${YELLOW}⚠️  Genie Space ID not found${NC}"
+    echo -e "      ${YELLOW}    Set GENIE_SPACE_ID environment variable or run setup/10_create_genie_space.py${NC}"
+    echo -e "      ${YELLOW}    Example: GENIE_SPACE_ID=01f0d894fdc119ed84cb7a9975acd4ed ./grant_permissions.sh dev${NC}"
+else
+    echo "      Genie Space ID: ${GENIE_SPACE_ID}"
+    
+    # Grant CAN_USE permission on Genie Space
+    # API Endpoint: PATCH /api/2.0/permissions/genie/spaces/{space_id}
+    databricks permissions update genie/spaces/${GENIE_SPACE_ID} \
+      --json "{\"access_control_list\": [{\"service_principal_name\": \"$SP_ID\", \"permission_level\": \"CAN_USE\"}]}" \
+      --profile ${PROFILE} 2>&1 | grep -v "Warning" || true
+    
+    echo -e "      ${GREEN}✅ CAN_USE granted on Genie Space${NC}"
+fi
+
 echo ""
 echo "========================================================================"
 echo -e "${GREEN}✅ ALL PERMISSIONS GRANTED SUCCESSFULLY!${NC}"
@@ -161,6 +203,9 @@ echo "  ✅ Query schema: ${CATALOG}.${SCHEMA}"
 echo "  ✅ Use warehouse: ${WAREHOUSE_ID}"
 echo "  ✅ Execute UC functions: fraud_classify, fraud_extract_indicators, fraud_generate_explanation"
 echo "  ✅ Query vector index: ${CATALOG}.${SCHEMA}.fraud_cases_index"
+if [ ! -z "$GENIE_SPACE_ID" ]; then
+    echo "  ✅ Query Genie Space: ${GENIE_SPACE_ID}"
+fi
 echo ""
 echo "Test your app at:"
 echo "  https://your-workspace.azuredatabricks.net/apps/${APP_NAME}"

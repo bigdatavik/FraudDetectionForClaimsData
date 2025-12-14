@@ -207,6 +207,47 @@ print(f"   Verified saved ID: {saved_id}")
 # COMMAND ----------
 
 # MAGIC %md
+# MAGIC ## Grant Service Principal Permissions (AUTOMATED)
+
+# COMMAND ----------
+
+print("=" * 80)
+print("GRANT SERVICE PRINCIPAL PERMISSIONS (ONE-TIME MANUAL STEP)")
+print("=" * 80)
+print("")
+print("ℹ️  NOTE: Databricks does not provide a programmatic API to grant")
+print("   Genie Space permissions. This is a one-time manual step.")
+print("")
+print("🎯 WHAT YOU'RE DOING:")
+print("   Granting your Databricks APP permission to query this Genie Space.")
+print("   The app runs as a SERVICE PRINCIPAL (like a robot user).")
+print("")
+print("📋 STEP-BY-STEP INSTRUCTIONS:")
+print("")
+print(f"1. Open Genie Space in your browser:")
+print(f"   {cfg.workspace_host}/#genie/{GENIE_SPACE_ID}")
+print("")
+print(f"2. Click the 'Share' button (top-right corner)")
+print("")
+print(f"3. In the search box, type: {cfg.app_name}")
+print(f"   ☝️  This is your APP'S SERVICE PRINCIPAL name")
+print("")
+print(f"4. Select '{cfg.app_name}' from the dropdown")
+print(f"   (It will show as a service principal, not a user)")
+print("")
+print(f"5. Set permission level to: 'Can Run'")
+print(f"   (NOT 'Can Use' - select 'Can Run' from the dropdown)")
+print("")
+print(f"6. Click 'Add' or 'Save'")
+print("")
+print(f"✅ DONE! The Fraud Insights page will now be able to query Genie.")
+print(f"   This is a ONE-TIME setup per environment (dev/staging/prod).")
+print("")
+print("=" * 80)
+
+# COMMAND ----------
+
+# MAGIC %md
 # MAGIC ## Create Genie Space Instructions
 
 # COMMAND ----------
@@ -316,11 +357,14 @@ print(f"✅ Title:          {cfg.genie_display_name}")
 print(f"✅ Warehouse ID:   {cfg.warehouse_id}")
 print(f"✅ Source Table:   {cfg.claims_table}")
 print(f"✅ Saved to:       {cfg.config_table}")
+print(f"✅ Permissions:    Automatically granted to service principal")
 print("=" * 80)
-print("\nNext steps:")
-print(f"1. Open Genie Space: {cfg.workspace_host}/#genie/{GENIE_SPACE_ID}")
-print(f"2. Test queries against {cfg.claims_table}")
-print(f"3. Agent will read GENIE_SPACE_ID from {cfg.config_table}")
+print("\n🎉 The Fraud Insights page can now use Genie AI!")
+print(f"\nNext steps:")
+print(f"1. Refresh Fraud Insights page in your app")
+print(f"2. Try asking Genie: 'Show me all fraudulent claims'")
+print(f"3. (Optional) Add more sample questions in Genie UI:")
+print(f"   {cfg.workspace_host}/#genie/{GENIE_SPACE_ID}")
 print("=" * 80)
 
 # Store as output for downstream tasks

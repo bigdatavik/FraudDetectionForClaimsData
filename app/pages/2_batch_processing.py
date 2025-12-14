@@ -421,16 +421,22 @@ if st.session_state.batch_claims is not None and not st.session_state.batch_clai
         
         elapsed_time = time.time() - start_time
         
-        # Store results
+        # Store results in session state
         st.session_state.batch_results = pd.DataFrame(results)
         st.session_state.processing_complete = True
         st.session_state.processing_time = elapsed_time
         
+        # Clear progress indicators
+        progress_bar.empty()
         status_text.empty()
+        live_results_placeholder.empty()
+        
         st.success(f"✅ Processing complete! Analyzed {total_claims} claims in {elapsed_time:.1f} seconds")
+        
+        # Force rerun to show results section
         st.rerun()
 
-# Results Section
+# Results Section - Shows independently of file upload status
 if st.session_state.processing_complete and st.session_state.batch_results is not None:
     st.markdown("---")
     st.subheader("📊 Step 4: View Results")

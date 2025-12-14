@@ -448,6 +448,59 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for contribution guidelines.
 
 ---
 
+## 🧹 Cleanup & Testing
+
+### **Complete Cleanup** (Start Fresh)
+
+If you want to destroy everything and test end-to-end deployment:
+
+```bash
+# Cleanup everything
+./cleanup_all.sh dev
+```
+
+**This script will:**
+1. 🗑️ Delete the Databricks app
+2. 🗑️ Run cleanup notebook (deletes catalog, schema, tables, vector index, Genie Space)
+3. 🗑️ Remove local `.databricks/` folder
+4. 🗑️ Remove remote workspace bundle files
+5. 🗑️ Optionally delete the setup job
+
+**Interactive mode** (asks for confirmation):
+```bash
+./cleanup_all.sh dev
+```
+
+**Skip confirmation** (for automation):
+```bash
+./cleanup_all.sh dev --skip-confirmation
+```
+
+---
+
+### **Full End-to-End Test**
+
+Perfect for testing before demos or production:
+
+```bash
+# Step 1: Clean everything
+./cleanup_all.sh dev
+
+# Step 2: Deploy fresh
+./deploy_with_config.sh dev
+
+# Step 3: Test the app
+# Open: https://your-workspace.azuredatabricks.net/apps/frauddetection-dev
+# Try analyzing sample claims
+```
+
+**Expected Timeline:**
+- Cleanup: ~2-3 minutes
+- Fresh deployment: ~10-15 minutes
+- Total: ~15-20 minutes
+
+---
+
 ## 📝 License
 
 MIT License - see [LICENSE](LICENSE)

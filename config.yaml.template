@@ -1,0 +1,114 @@
+# Configuration template for Fraud Detection Claims
+# Copy this to config.yaml and fill in your values
+
+# DO NOT COMMIT config.yaml - it contains sensitive information
+# This template is safe to commit
+
+default_environment: dev
+
+environments:
+  dev:
+    # Your Databricks workspace URL
+    workspace_host: "https://your-workspace.azuredatabricks.net"
+    
+    # Databricks CLI profile name (optional, uses DEFAULT if not set)
+    profile: "DEFAULT"
+    
+    # Unity Catalog and schema names
+    catalog: "fraud_detection_dev"
+    schema: "claims_analysis"
+    
+    # SQL Warehouse ID for executing queries
+    # Find this in Databricks workspace → SQL → Warehouses
+    warehouse_id: "your-warehouse-id"
+    
+    # Vector Search endpoint name
+    # Must be created in your workspace first
+    vector_endpoint: "your-vector-endpoint"
+    
+    # LLM endpoint for AI functions and agent
+    # Options: databricks-claude-sonnet-4, databricks-meta-llama-3-1-405b-instruct
+    llm_endpoint: "databricks-claude-sonnet-4"
+    
+    # Streamlit app name (will appear in URL)
+    app_name: "fraud-detection-dev"
+    
+  staging:
+    workspace_host: "https://your-workspace.azuredatabricks.net"
+    profile: "STAGING"
+    catalog: "fraud_detection_staging"
+    schema: "claims_analysis"
+    warehouse_id: "your-staging-warehouse-id"
+    vector_endpoint: "your-staging-vector-endpoint"
+    llm_endpoint: "databricks-claude-sonnet-4"
+    app_name: "fraud-detection-staging"
+    
+  prod:
+    workspace_host: "https://your-workspace.azuredatabricks.net"
+    profile: "PROD"
+    catalog: "fraud_detection_prod"
+    schema: "claims_analysis"
+    warehouse_id: "your-prod-warehouse-id"
+    vector_endpoint: "your-prod-vector-endpoint"
+    llm_endpoint: "databricks-claude-sonnet-4"
+    app_name: "fraud-detection-prod"
+
+# Common configuration shared across all environments
+common:
+  # Databricks Runtime version for job clusters
+  spark_version: "16.4.x-scala2.12"
+  
+  # Cluster node type
+  node_type: "Standard_DS3_v2"
+  
+  # Number of workers
+  num_workers: 2
+  
+  # Data generation settings
+  num_claims: 1000
+  fraud_rate: 0.08  # 8% of claims are fraudulent
+  
+  # Genie Space settings
+  genie_space_display_name: "Fraud Detection Analytics"
+  genie_space_description: "Natural language queries for fraud claims data and trends"
+  
+  # Vector search settings
+  embedding_model: "databricks-gte-large-en"
+  sync_type: "TRIGGERED"
+
+# HOW TO FILL THIS OUT:
+#
+# 1. workspace_host:
+#    - Go to your Databricks workspace
+#    - Copy URL from browser (e.g., https://eastus2.azuredatabricks.net)
+#
+# 2. warehouse_id:
+#    - In Databricks workspace → SQL → Warehouses
+#    - Click on your warehouse
+#    - Copy the ID from the URL or details page
+#
+# 3. vector_endpoint:
+#    - In Databricks workspace → Compute → Vector Search
+#    - Create endpoint if needed, use the name you created
+#
+# 4. catalog/schema:
+#    - Choose your naming convention
+#    - These will be created automatically if they don't exist
+#
+# 5. app_name:
+#    - Must be unique in your workspace
+#    - Use lowercase with hyphens only
+#
+# EXAMPLE FILLED CONFIG:
+# 
+# dev:
+#   workspace_host: "https://eastus2.azuredatabricks.net"
+#   profile: "DEFAULT"
+#   catalog: "fraud_detection_dev"
+#   schema: "claims_analysis"
+#   warehouse_id: "148ccb90800933a1"
+#   vector_endpoint: "one-env-shared-endpoint-2"
+#   llm_endpoint: "databricks-claude-sonnet-4"
+#   app_name: "fraud-detection-dev"
+
+

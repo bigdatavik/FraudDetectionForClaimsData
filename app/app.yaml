@@ -1,0 +1,39 @@
+# ✅ CORRECT - Official Microsoft Pattern (per MY_ENVIRONMENT)
+# 🤖 AUTO-GENERATED from config.yaml - DO NOT EDIT DIRECTLY!
+# Run: python generate_app_yaml.py dev
+#
+# To use these values in your code:
+#   import os
+#   catalog = os.getenv("CATALOG_NAME")
+#   schema = os.getenv("SCHEMA_NAME")
+
+command: ['streamlit', 'run', 'app_databricks.py']
+
+env:
+  # Core Databricks connection
+  - name: 'DATABRICKS_HOST'
+    value: 'adb-984752964297111.11.azuredatabricks.net'
+  - name: 'DATABRICKS_WAREHOUSE_ID'
+    value: '148ccb90800933a1'
+  
+  # Unity Catalog configuration
+  - name: 'CATALOG_NAME'
+    value: 'fraud_detection_dev'
+  - name: 'SCHEMA_NAME'
+    value: 'claims_analysis'
+  
+  # Vector Search configuration
+  - name: 'VECTOR_ENDPOINT'
+    value: 'one-env-shared-endpoint-2'
+  
+  # LLM configuration
+  - name: 'LLM_ENDPOINT'
+    value: 'databricks-claude-sonnet-4-5'
+  
+  # Environment identifier
+  - name: 'ENVIRONMENT'
+    value: 'dev'
+  
+  # Embedding model for vector search
+  - name: 'EMBEDDING_MODEL'
+    value: 'databricks-gte-large-en'

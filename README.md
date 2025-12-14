@@ -1,0 +1,471 @@
+# 🔍 AI-Powered Fraud Detection for Insurance Claims
+
+> **Quick Start**: From config to deployed app in 3 commands!
+
+[![Databricks](https://img.shields.io/badge/Databricks-Ready-red?logo=databricks)](https://databricks.com)
+[![LangGraph](https://img.shields.io/badge/LangGraph-Agents-blue)](https://langchain-ai.github.io/langgraph/)
+[![Unity Catalog](https://img.shields.io/badge/Unity%20Catalog-AI%20Functions-orange)](https://www.databricks.com/product/unity-catalog)
+
+An intelligent fraud detection system using LangGraph agents, Unity Catalog AI functions, Vector Search, and Genie API.
+
+---
+
+## 🚀 Quick Start (2 Steps)
+
+### **Step 1: Configure** (2 minutes)
+
+Edit `config.yaml` with your Databricks details:
+
+```bash
+vim config.yaml
+```
+
+Update these values:
+```yaml
+environments:
+  dev:
+    workspace_host: "https://your-workspace.azuredatabricks.net"  # ← Your workspace URL
+    profile: "DEFAULT_azure"                                       # ← Your profile name
+    catalog: "fraud_detection_dev"                                 # ← Leave as is (or customize)
+    warehouse_id: "your-warehouse-id"                             # ← Your SQL Warehouse ID
+```
+
+**Where to find these values**:
+- **Workspace URL**: Your Databricks workspace URL (copy from browser)
+- **Profile**: Check `~/.databrickscfg` (usually `DEFAULT` or `DEFAULT_azure`)
+- **Warehouse ID**: Databricks → SQL Warehouses → Copy the ID
+
+---
+
+### **Step 2: Deploy Everything** (6 minutes - automated!)
+
+**Option A: One-Command Deploy** (Recommended ⭐)
+
+```bash
+./deploy_with_config.sh dev
+```
+
+This automatically does **everything**:
+1. ✅ Generates `app/app.yaml` from config
+2. ✅ Deploys app and infrastructure
+3. ✅ Runs setup job (creates catalog, tables, functions, vector index, Genie Space)
+4. ✅ Grants service principal permissions
+5. ✅ Deploys app source code
+
+**That's it!** The entire deployment is complete. Just wait for the script to finish.
+
+---
+
+**Option B: Manual Steps** (if you prefer step-by-step)
+```bash
+# Generate app config
+python generate_app_yaml.py dev
+
+# Deploy infrastructure
+databricks bundle deploy --target dev
+
+# Create data and resources
+databricks bundle run setup_fraud_detection --target dev
+
+# Grant permissions
+./grant_permissions.sh dev
+
+# Deploy app source code
+./deploy_app_source.sh dev
+```
+
+---
+
+**That's it!** ✅
+
+Your app will be available at: `https://your-workspace.azuredatabricks.net/apps/frauddetection-dev`
+
+**📖 Note:** Per [Microsoft Databricks documentation](https://learn.microsoft.com/en-us/azure/databricks/dev-tools/bundles/apps-tutorial#deploy-the-app-to-the-workspace), deploying a bundle doesn't automatically deploy the app to compute. That's why we run `deploy_app_source.sh` as a separate step to deploy the app source code from the bundle workspace location.
+
+---
+
+## 📋 What Gets Deployed
+
+When you run the commands above, the system automatically:
+
+1. ✅ Creates Unity Catalog `fraud_detection_dev`
+2. ✅ Creates schema `claims_analysis`
+3. ✅ Generates 1000 sample insurance claims
+4. ✅ Creates 3 AI functions (classify, extract, explain)
+5. ✅ Creates knowledge base with fraud patterns
+6. ✅ Creates vector search index
+7. ✅ Creates Genie Space for natural language queries
+8. ✅ Deploys Streamlit app with 5 pages
+9. ✅ Grants all necessary permissions
+
+**Total time**: ~5-7 minutes
+
+---
+
+## 🎯 Features
+
+### **Intelligent Agent**
+- **LangGraph ReAct Pattern**: Adaptive reasoning and tool selection
+- **4 Specialized Tools**: Classify, extract, search cases, query trends
+- **Explainable Decisions**: Full reasoning trace
+
+### **AI Functions** (Unity Catalog)
+- `fraud_classify` - Classify claims as fraudulent or legitimate
+- `fraud_extract_indicators` - Extract red flags and suspicious patterns
+- `fraud_generate_explanation` - Generate human-readable explanations
+
+### **Vector Search**
+- Semantic search for similar fraud cases
+- Sub-second query performance
+- Databricks-managed embeddings
+
+### **Streamlit Dashboard**
+- 🏠 Home - Overview and system status
+- 📊 Claim Analysis - Analyze individual claims
+- ⚡ Batch Processing - Process multiple claims
+- 📈 Fraud Insights - Statistics and visualizations
+- 🔎 Case Search - Search historical fraud cases
+- 🤖 Agent Playground - Interactive chat with agent
+
+---
+
+## 🔧 Configuration
+
+### **File Structure**
+
+```
+config.yaml              # ← Edit this (source of truth)
+    ↓
+generate_app_yaml.py     # ← Run this (generates app config)
+    ↓
+app/app.yaml            # ← Auto-generated (don't edit)
+    ↓
+Deploy!
+```
+
+### **Multiple Environments**
+
+The system supports dev, staging, and prod environments:
+
+```yaml
+# config.yaml
+environments:
+  dev:
+    catalog: "fraud_detection_dev"
+  staging:
+    catalog: "fraud_detection_staging"
+  prod:
+    catalog: "fraud_detection_prod"
+```
+
+Deploy to different environments:
+
+```bash
+# Dev
+python generate_app_yaml.py dev
+databricks bundle deploy --target dev
+
+# Staging
+python generate_app_yaml.py staging
+databricks bundle deploy --target staging
+
+# Prod
+python generate_app_yaml.py prod
+databricks bundle deploy --target prod
+```
+
+---
+
+## 📖 Detailed Instructions
+
+### **Prerequisites**
+
+1. **Databricks Workspace** (Azure, AWS, or GCP)
+2. **Unity Catalog** enabled
+3. **SQL Warehouse** created
+4. **Databricks CLI** installed and configured
+   ```bash
+   databricks --version  # Should show version
+   ```
+
+### **Initial Setup**
+
+1. **Clone the repository**
+   ```bash
+   git clone <repository>
+   cd FraudDetectionForClaimsData
+   ```
+
+2. **Configure Databricks CLI** (if not already done)
+   ```bash
+   databricks configure --profile DEFAULT_azure
+   ```
+   
+   Enter:
+   - Host: `https://your-workspace.azuredatabricks.net`
+   - Token: Your personal access token
+
+3. **Edit config.yaml**
+   ```bash
+   vim config.yaml
+   ```
+   
+   Update:
+   - `workspace_host` - Your workspace URL
+   - `warehouse_id` - Your SQL Warehouse ID
+   - `catalog` - Catalog name (or leave default)
+   - `profile` - Profile name from step 2
+
+4. **🚀 Deploy everything with one command**
+   ```bash
+   ./deploy_with_config.sh dev
+   ```
+   
+   This automated script does everything:
+   - ✅ Generates `app.yaml` from `config.yaml`
+   - ✅ Deploys infrastructure (jobs, app definition)
+   - ✅ Runs setup notebooks (creates catalog, tables, functions, data, Genie Space)
+   - ✅ Grants service principal permissions
+   - ✅ Deploys app source code
+   
+   **Alternative: Manual step-by-step deployment**
+   
+   If you prefer to run each step individually:
+   
+   ```bash
+   # Step 1: Generate app.yaml
+   python generate_app_yaml.py dev
+   
+   # Step 2: Deploy infrastructure (creates app and job definitions)
+   databricks bundle deploy --target dev --profile DEFAULT_azure
+   
+   # Step 3: Run setup job (creates catalog, tables, functions, data, Genie Space)
+   databricks bundle run setup_fraud_detection --target dev --profile DEFAULT_azure
+   
+   # Step 4: Grant service principal permissions
+   ./grant_permissions.sh dev
+   
+   # Step 5: Deploy app source code from bundle location
+   ./deploy_app_source.sh dev
+   ```
+   
+   **Important:** Per [Microsoft documentation](https://learn.microsoft.com/en-us/azure/databricks/dev-tools/bundles/apps-tutorial#deploy-the-app-to-the-workspace), `databricks bundle deploy` creates the app infrastructure but does **not** automatically deploy the source code to compute. Step 5 explicitly deploys the app source code from the bundle workspace location using `databricks apps deploy`.
+
+5. **⚠️ IMPORTANT: Configure Genie Space Instructions**
+   
+   After the setup job completes, the `10_create_genie_space` notebook will output custom instructions for your Genie Space. You **MUST** copy these instructions and add them to the Genie Space manually:
+   
+   - Go to the notebook output for task `create_genie_space`
+   - Copy the "Instructions for Genie Space" text (usually a long paragraph describing how to analyze fraud claims)
+   - Open the Genie Space in Databricks: **Data Intelligence > Genie > Fraud Detection Analytics**
+   - Click **Settings** (gear icon)
+   - Paste the instructions into the **Instructions** field
+   - Click **Save**
+   
+   **Why?** The Genie API doesn't support setting instructions via API yet, so this manual step is required for proper Genie behavior.
+
+6. **Access your app**
+   
+   The app URL will be shown after deployment:
+   ```
+   https://your-workspace.azuredatabricks.net/apps/frauddetection-dev
+   ```
+   
+   Wait 30-60 seconds for the app to start, then open the URL in your browser.
+
+---
+
+## 🔍 Verification
+
+### **Check Deployment Status**
+
+```bash
+# Check if app is running
+databricks apps get frauddetection_dev --profile DEFAULT_azure
+
+# Check if catalog was created
+databricks catalogs get fraud_detection_dev --profile DEFAULT_azure
+
+# Check if tables exist
+databricks tables list --catalog-name fraud_detection_dev --schema-name claims_analysis --profile DEFAULT_azure
+```
+
+### **Expected Output**
+
+You should see:
+- Catalog: `fraud_detection_dev`
+- Schema: `claims_analysis`
+- Tables: `claims_data`, `fraud_cases_kb`, `config_genie`
+- Functions: `fraud_classify`, `fraud_extract_indicators`, `fraud_generate_explanation`
+- App: `frauddetection_dev` (status: RUNNING)
+
+---
+
+## 🆘 Troubleshooting
+
+### **Problem: App shows "No source code" or "Not yet deployed"**
+
+**Cause**: Bundle creates the app infrastructure but doesn't auto-deploy source code to compute ([per Microsoft docs](https://learn.microsoft.com/en-us/azure/databricks/dev-tools/bundles/apps-tutorial#deploy-the-app-to-the-workspace))
+
+**Solution**: Run the app deployment script
+```bash
+./deploy_app_source.sh dev
+```
+
+This deploys the source code from the bundle workspace location to the app.
+
+**Manual alternative**:
+```bash
+# Get your username
+databricks workspace whoami --profile DEFAULT_azure
+
+# Deploy from bundle location
+databricks apps deploy frauddetection-dev \
+  --source-code-path /Workspace/Users/<your-email>/.bundle/fraud_detection_claims/dev/files/app \
+  --profile DEFAULT_azure
+```
+
+### **Problem: "Permission denied" errors**
+
+**Solution**: Grant service principal permissions
+```bash
+./grant_permissions.sh dev
+```
+
+Or manually:
+```bash
+# Get service principal ID
+SP_ID=$(databricks apps get frauddetection-dev --profile DEFAULT_azure | grep service_principal_client_id | cut -d'"' -f4)
+
+# Grant catalog access
+databricks grants update catalog fraud_detection_dev --json "{\"changes\": [{\"principal\": \"$SP_ID\", \"add\": [\"USE_CATALOG\"]}]}" --profile DEFAULT_azure
+
+# Grant schema access
+databricks grants update schema fraud_detection_dev.claims_analysis --json "{\"changes\": [{\"principal\": \"$SP_ID\", \"add\": [\"USE_SCHEMA\", \"SELECT\"]}]}" --profile DEFAULT_azure
+
+# Grant warehouse access
+databricks permissions update sql/warehouses/148ccb90800933a1 --json "{\"access_control_list\": [{\"service_principal_name\": \"$SP_ID\", \"permission_level\": \"CAN_USE\"}]}" --profile DEFAULT_azure
+```
+
+### **Problem: App not found**
+
+Check if deployment succeeded:
+```bash
+databricks apps list --profile DEFAULT_azure
+```
+
+If not listed, redeploy:
+```bash
+databricks bundle deploy --target dev --profile DEFAULT_azure
+```
+
+### **Problem: Notebooks failed**
+
+Check job status:
+```bash
+databricks jobs list --profile DEFAULT_azure
+databricks jobs list-runs --job-id <job-id> --limit 1 --profile DEFAULT_azure
+```
+
+Rerun failed job:
+```bash
+databricks bundle run setup_fraud_detection --target dev --profile DEFAULT_azure
+```
+
+### **Problem: Vector Index already exists**
+
+The setup notebooks check for existing resources and skip creation if they exist. If you need a clean slate:
+
+```bash
+# Run cleanup notebook in Databricks workspace
+# Navigate to: Workspace > setup > 00_CLEANUP
+# Click "Run All"
+```
+
+---
+
+## 📁 Project Structure
+
+```
+FraudDetectionForClaimsData/
+├── config.yaml                  # ⭐ Configuration (edit this)
+├── generate_app_yaml.py         # ⭐ Generator script (run this)
+├── databricks.yml               # Databricks Asset Bundle config
+├── deploy_with_config.sh        # One-command deployment script
+│
+├── shared/
+│   └── config.py                # Config loader for notebooks
+│
+├── setup/                       # Setup notebooks (run by DAB)
+│   ├── 01_create_catalog_schema.py
+│   ├── 02_generate_sample_data.py
+│   ├── 03_uc_fraud_classify.py
+│   ├── 04_uc_fraud_extract.py
+│   ├── 05_uc_fraud_explain.py
+│   ├── 06_create_knowledge_base.py
+│   ├── 07_create_vector_index.py
+│   ├── 08_create_fraud_analysis_table.py
+│   ├── 09_batch_analyze_claims.py
+│   └── 10_create_genie_space.py
+│
+├── app/                         # Streamlit application
+│   ├── app.yaml                 # Auto-generated (don't edit)
+│   ├── app_databricks.py        # Main app
+│   ├── requirements.txt         # Dependencies
+│   ├── pages/                   # Streamlit pages
+│   │   ├── 1_claim_analysis.py
+│   │   ├── 2_batch_processing.py
+│   │   ├── 3_fraud_insights.py
+│   │   ├── 4_case_search.py
+│   │   └── 5_agent_playground.py
+│   └── utils/
+│       ├── fraud_agent.py       # LangGraph agent
+│       └── databricks_client.py # DB utilities
+│
+├── notebooks/
+│   └── 01_fraud_agent.ipynb     # Interactive agent demo
+│
+└── docs/
+    ├── ARCHITECTURE.md          # System architecture
+    ├── DEPLOYMENT.md            # Deployment guide
+    └── TROUBLESHOOTING.md       # Common issues
+```
+
+---
+
+## 🎓 Learn More
+
+- **Architecture**: See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)
+- **Deployment**: See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)
+- **Troubleshooting**: See [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md)
+- **Demo**: See [DEMO.md](DEMO.md)
+
+---
+
+## 🤝 Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for contribution guidelines.
+
+---
+
+## 📝 License
+
+MIT License - see [LICENSE](LICENSE)
+
+---
+
+## 🎉 Summary
+
+**For a new operator, the steps are**:
+
+1. Edit `config.yaml` (2 minutes)
+2. Run `python generate_app_yaml.py dev` (10 seconds)
+3. Run `databricks bundle deploy --target dev` (1 minute)
+4. Run `databricks bundle run setup_fraud_detection --target dev` (5 minutes)
+5. Access app at provided URL ✅
+
+**Total time**: ~8 minutes from zero to deployed app!
+
+---
+
+**Built with ❤️ on Databricks**

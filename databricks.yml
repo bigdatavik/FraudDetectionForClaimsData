@@ -1,0 +1,164 @@
+bundle:
+  name: fraud_detection_claims
+
+workspace:
+  host: https://adb-984752964297111.11.azuredatabricks.net
+  profile: DEFAULT_azure
+
+# Define variable that will be passed to notebooks
+variables:
+  environment:
+    description: "Environment (dev/staging/prod)"
+    default: dev
+
+# Define targets (--target flag)
+# All environments use same workspace, separated by catalog names
+targets:
+  # Development target
+  dev:
+    mode: development
+    variables:
+      environment: dev
+    workspace:
+      host: https://adb-984752964297111.11.azuredatabricks.net
+      profile: DEFAULT_azure
+  
+  # Staging target (same workspace, different catalog)
+  staging:
+    mode: development
+    variables:
+      environment: staging
+    workspace:
+      host: https://adb-984752964297111.11.azuredatabricks.net
+      profile: DEFAULT_azure
+  
+  # Production target (same workspace, different catalog)
+  prod:
+    mode: production
+    variables:
+      environment: prod
+    workspace:
+      host: https://adb-984752964297111.11.azuredatabricks.net
+      profile: DEFAULT_azure
+
+resources:
+  jobs:
+    setup_fraud_detection:
+      # Use variable in job name
+      name: fraud_detection_setup_${var.environment}
+      job_clusters:
+        - job_cluster_key: main_cluster
+          new_cluster:
+            spark_version: "16.4.x-scala2.12"
+            node_type_id: "Standard_DS3_v2"
+            num_workers: 2
+      
+      # Pass environment variable to all notebook tasks
+      parameters:
+        - name: environment
+          default: ${var.environment}
+      
+      tasks:
+        - task_key: create_catalog
+          job_cluster_key: main_cluster
+          notebook_task:
+            notebook_path: ./setup/01_create_catalog_schema.py
+            base_parameters:
+              environment: ${var.environment}
+        
+        - task_key: generate_data
+          depends_on:
+            - task_key: create_catalog
+          job_cluster_key: main_cluster
+          notebook_task:
+            notebook_path: ./setup/02_generate_sample_data.py
+            base_parameters:
+              environment: ${var.environment}
+        
+        - task_key: create_uc_classify
+          depends_on:
+            - task_key: generate_data
+          job_cluster_key: main_cluster
+          notebook_task:
+            notebook_path: ./setup/03_uc_fraud_classify.py
+            base_parameters:
+              environment: ${var.environment}
+        
+        - task_key: create_uc_extract
+          depends_on:
+            - task_key: create_uc_classify
+          job_cluster_key: main_cluster
+          notebook_task:
+            notebook_path: ./setup/04_uc_fraud_extract.py
+            base_parameters:
+              environment: ${var.environment}
+        
+        - task_key: create_uc_explain
+          depends_on:
+            - task_key: create_uc_extract
+          job_cluster_key: main_cluster
+          notebook_task:
+            notebook_path: ./setup/05_uc_fraud_explain.py
+            base_parameters:
+              environment: ${var.environment}
+        
+        - task_key: create_knowledge_base
+          depends_on:
+            - task_key: create_uc_explain
+          job_cluster_key: main_cluster
+          notebook_task:
+            notebook_path: ./setup/06_create_knowledge_base.py
+            base_parameters:
+              environment: ${var.environment}
+        
+        - task_key: chunk_knowledge_base
+          depends_on:
+            - task_key: create_knowledge_base
+          job_cluster_key: main_cluster
+          notebook_task:
+            notebook_path: ./setup/06a_chunk_knowledge_base.py
+            base_parameters:
+              environment: ${var.environment}
+        
+        - task_key: create_vector_index
+          depends_on:
+            - task_key: chunk_knowledge_base
+          job_cluster_key: main_cluster
+          notebook_task:
+            notebook_path: ./setup/07_create_vector_index.py
+            base_parameters:
+              environment: ${var.environment}
+        
+        - task_key: create_fraud_analysis
+          depends_on:
+            - task_key: create_vector_index
+          job_cluster_key: main_cluster
+          notebook_task:
+            notebook_path: ./setup/08_create_fraud_analysis_table.py
+            base_parameters:
+              environment: ${var.environment}
+        
+        - task_key: batch_analyze_claims
+          depends_on:
+            - task_key: create_fraud_analysis
+          job_cluster_key: main_cluster
+          notebook_task:
+            notebook_path: ./setup/09_batch_analyze_claims.py
+            base_parameters:
+              environment: ${var.environment}
+        
+        - task_key: create_genie_space
+          depends_on:
+            - task_key: batch_analyze_claims
+          job_cluster_key: main_cluster
+          notebook_task:
+            notebook_path: ./setup/10_create_genie_space.py
+            base_parameters:
+              environment: ${var.environment}
+  
+  apps:
+    fraud-detection-app:
+      # Use variable in app name (must use hyphens, not underscores!)
+      name: frauddetection-${var.environment}
+      description: "AI-Powered Fraud Detection - ${var.environment}"
+      source_code_path: ./app

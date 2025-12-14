@@ -5,6 +5,9 @@ langraph_tutorial/
 # Temporary documentation and scratch files
 deletelater/
 
+# Environment standards (symlink to personal standards)
+MY_ENVIRONMENT.md
+
 # Python
 __pycache__/
 *.py[cod]

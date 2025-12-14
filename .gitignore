@@ -2,6 +2,9 @@
 langgraph_tutorial_setup/
 langraph_tutorial/
 
+# Temporary documentation and scratch files
+deletelater/
+
 # Python
 __pycache__/
 *.py[cod]

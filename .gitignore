@@ -8,9 +8,6 @@ deletelater/
 # LinkedIn content (personal publishing materials)
 linkedin/
 
-# Notebooks (development/testing)
-notebooks/
-
 # Environment standards (symlink to personal standards)
 MY_ENVIRONMENT.md
 

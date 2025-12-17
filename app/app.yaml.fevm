@@ -1,0 +1,43 @@
+# ✅ CORRECT - Official Microsoft Pattern (per MY_ENVIRONMENT)
+# 🤖 AUTO-GENERATED from config.yaml - DO NOT EDIT DIRECTLY!
+# Run: python generate_app_yaml.py prod
+#
+# To use these values in your code:
+#   import os
+#   catalog = os.getenv("CATALOG_NAME")
+#   schema = os.getenv("SCHEMA_NAME")
+
+command: ['streamlit', 'run', 'app_databricks.py']
+
+env:
+  # Core Databricks connection
+  - name: 'DATABRICKS_HOST'
+    value: 'fe-vm-industry-solutions-buildathon.cloud.databricks.com'
+  - name: 'DATABRICKS_WAREHOUSE_ID'
+    value: '159828d8fa91cd28'
+  
+  # Unity Catalog configuration
+  - name: 'CATALOG_NAME'
+    value: 'fraud_detection_prod'
+  - name: 'SCHEMA_NAME'
+    value: 'claims_analysis'
+  
+  # Vector Search configuration
+  - name: 'VECTOR_ENDPOINT'
+    value: 'one-env-shared-endpoint-2'
+  
+  # LLM configuration
+  - name: 'LLM_ENDPOINT'
+    value: 'databricks-claude-sonnet-4-5'
+  
+  # Genie Space ID (for Fraud Insights page)
+  - name: 'GENIE_SPACE_ID'
+    value: ''
+  
+  # Environment identifier
+  - name: 'ENVIRONMENT'
+    value: 'prod'
+  
+  # Embedding model for vector search
+  - name: 'EMBEDDING_MODEL'
+    value: 'databricks-gte-large-en'

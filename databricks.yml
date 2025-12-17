@@ -38,8 +38,19 @@ targets:
     variables:
       environment: prod
     workspace:
-      host: https://adb-984752964297111.11.azuredatabricks.net
-      profile: DEFAULT_azure
+      host: https://fe-vm-industry-solutions-buildathon.cloud.databricks.com
+      profile: DEFAULT_fevm
+      root_path: /Workspace/Users/vik.malhotra@databricks.com/.bundle/fraud_detection_claims/prod
+     # Override cluster config for prod
+    resources:
+      jobs:
+        setup_fraud_detection:
+          job_clusters:
+            - job_cluster_key: main_cluster
+              new_cluster:
+                spark_version: "16.4.x-scala2.12"
+                node_type_id: "r3.xlarge"  # Use AWS instance type instead
+                num_workers: 2
 
 resources:
   jobs:

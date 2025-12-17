@@ -52,11 +52,12 @@ environments:
 ```
 
 This automatically does **everything**:
-1. ✅ Generates `app/app.yaml` from config
-2. ✅ Deploys app and infrastructure
-3. ✅ Runs setup job (creates catalog, tables, functions, vector index, Genie Space)
-4. ✅ Grants service principal permissions
-5. ✅ Deploys app source code
+1. ✅ Updates notebook versions and dates
+2. ✅ Generates `app/app.yaml` from config
+3. ✅ Deploys app and infrastructure
+4. ✅ Runs setup job (creates catalog, tables, functions, vector index, Genie Space)
+5. ✅ Grants service principal permissions
+6. ✅ Deploys app source code
 
 **After deployment completes, one additional step:**
 
@@ -496,9 +497,11 @@ FraudDetectionForClaimsData/
 
 ## 🎓 Learn More
 
+- **📝 Quick Commands**: See [CHEATSHEET.md](CHEATSHEET.md) - Most common commands
 - **Architecture**: See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)
 - **Deployment**: See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)
 - **Troubleshooting**: See [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md)
+- **Versioning**: See [docs/VERSIONING.md](docs/VERSIONING.md) - Automatic notebook version updates
 - **Demo**: See [DEMO.md](DEMO.md)
 
 ---

@@ -25,8 +25,18 @@ if [ ! -f "config.yaml" ]; then
     exit 1
 fi
 
-# Step 2: Generate app.yaml from config.yaml
-echo "📝 Step 1: Generating app/app.yaml from config.yaml..."
+# Step 2: Update notebook version and date
+echo "📝 Step 1: Updating notebook version and date..."
+python update_notebook_version.py --use-git
+
+if [ $? -ne 0 ]; then
+    echo -e "${YELLOW}⚠️  WARNING: Failed to update notebook version (continuing anyway)${NC}"
+fi
+
+echo ""
+
+# Step 3: Generate app.yaml from config.yaml
+echo "📝 Step 2: Generating app/app.yaml from config.yaml..."
 python generate_app_yaml.py ${ENVIRONMENT}
 
 if [ $? -ne 0 ]; then
@@ -44,7 +54,7 @@ if [ ! -f "databricks.yml" ]; then
 fi
 
 # Step 4: Deploy with Databricks Asset Bundles
-echo "📦 Step 2: Deploying with Databricks Asset Bundles..."
+echo "📦 Step 3: Deploying with Databricks Asset Bundles..."
 databricks bundle deploy --target ${ENVIRONMENT} --profile DEFAULT_azure
 
 if [ $? -ne 0 ]; then

@@ -125,6 +125,7 @@ databricks bundle run setup_job --target dev --notebook-path setup/10_create_gen
 - **Architecture:** `docs/ARCHITECTURE.md`
 - **Deployment Guide:** `docs/DEPLOYMENT.md`
 - **Versioning:** `docs/VERSIONING.md`
+- **Images Setup:** `docs/images/README.md` - How to set up notebook images
 - **Troubleshooting:** `docs/TROUBLESHOOTING.md`
 - **Project Summary:** `docs/PROJECT_SUMMARY.md`
 

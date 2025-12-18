@@ -43,15 +43,17 @@
 # MAGIC
 # MAGIC ## 📊 Tutorial Architecture Overview
 # MAGIC
-# MAGIC ![5-Layer Architecture](/Workspace/Users/vik.malhotra@databricks.com/fraud_detection/images/technical_architecture_5layers.png)
+# MAGIC ![5-Layer Architecture](../docs/images/technical_architecture_5layers.png)
 # MAGIC
 # MAGIC *This tutorial teaches you to build the complete 5-layer architecture: from Databricks services (bottom) through LangChain tools, agents, ReAct pattern, up to LangGraph orchestration (top)*
+# MAGIC
+# MAGIC **Note:** If images don't display in your Databricks workspace, see the [Image Setup Guide](../docs/images/README.md) for workspace deployment instructions.
 # MAGIC
 # MAGIC ---
 # MAGIC
 # MAGIC ## 🛠️ The Four Tools You'll Build
 # MAGIC
-# MAGIC ![Four Tool Architecture](/Workspace/Users/vik.malhotra@databricks.com/fraud_detection/images/4_tools_architecture.png)
+# MAGIC ![Four Tool Architecture](../docs/images/4_tools_architecture.png)
 # MAGIC
 # MAGIC *Each tool wraps a Databricks service, giving the agent different capabilities: classification, extraction, search, and analytics*
 # MAGIC
@@ -915,7 +917,7 @@ print(f"\n🎯 Agent will decide which tools to use based on the claim!")
 # MAGIC
 # MAGIC ## 🔄 How the ReAct Pattern Works
 # MAGIC
-# MAGIC ![ReAct Pattern Execution](/Workspace/Users/vik.malhotra@databricks.com/.bundle/langraph-tutorial/test/files/docs/images/flowchart_showing_react_claim.png)
+# MAGIC ![ReAct Pattern Execution](../docs/images/flowchart_showing_react_claim.png)
 # MAGIC
 # MAGIC *The agent loops through Reason → Act → Observe → Decide until it has enough information to provide a complete answer*
 # MAGIC

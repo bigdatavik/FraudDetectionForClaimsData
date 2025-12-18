@@ -1,0 +1,6 @@
+# This file ensures the images directory is tracked in git
+# Place notebook image files here:
+# - technical_architecture_5layers.png
+# - 4_tools_architecture.png
+# - flowchart_showing_react_claim.png
+

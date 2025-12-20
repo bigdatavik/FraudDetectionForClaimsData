@@ -67,3 +67,4 @@ Thumbs.db
 # Config (may contain sensitive info - provide template instead)
 config.yaml  # User's actual config with credentials
 .cursorrules
+test_protection.sh
